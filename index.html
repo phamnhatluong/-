@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>/* ======================================================================
+   Heart of "I love you" words
+
+   Every word moves along two independent paths on different timings:
+     - X axis: smooth back-and-forth sway
+     - Y axis: a keyframed path shaped like the top and bottom of a heart
+   Combined, with each word delayed a bit more than the previous one,
+   they trace a heart outline.
+   ====================================================================== */
+
+:root {
+  --bg: #000;
+  --accent: #ea80b0;
+  --glow: #fff;
+
+  /* Heart bounding box; scales down on small screens */
+  --size: min(450px, 80vmin);
+
+  /* Timing */
+  --sway-duration: 10s;
+  --fall-duration: 20s;
+  --stagger: 300ms;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Centered stage for the heart */
+.heart {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+}
+
+/* Travelling wrapper: X via `translate`, Y via `transform`,
+   so the two animations never overwrite each other. */
+.heart__item {
+  position: absolute;
+  inset: 0 auto auto 0;
+  animation:
+    sway var(--sway-duration) ease-in-out infinite alternate,
+    fall var(--fall-duration) linear infinite;
+  animation-delay: calc(var(--index) * var(--stagger) * -1);
+  will-change: transform, translate;
+}
+
+.heart__word {
+  display: block;
+  color: var(--accent);
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  text-shadow: 0 0 10px var(--glow);
+  transform: translateY(-100%) rotate(-30deg);
+}
+
+/* --- Horizontal sway ------------------------------------------------ */
+@keyframes sway {
+  from { translate: 0 0; }
+  to   { translate: var(--size) 0; }
+}
+
+/* --- Vertical heart path -------------------------------------------- */
+/* Values are fractions of --size (0 = top, 1 = bottom). */
+@keyframes fall {
+  0%    { transform: translateY(calc(var(--size) * 0.4)); }
+  10%   { transform: translateY(calc(var(--size) * 0.1)); }
+  15%   { transform: translateY(calc(var(--size) * 0.01)); }
+  18%   { transform: translateY(0); }          /* top of left lobe  */
+  20%   { transform: translateY(calc(var(--size) * 0.01)); }
+  22%   { transform: translateY(calc(var(--size) * 0.076923)); }
+  24%   { transform: translateY(calc(var(--size) * 0.142857)); }
+  25%   { transform: translateY(calc(var(--size) * 0.25)); }  /* centre dip */
+  26%   { transform: translateY(calc(var(--size) * 0.142857)); }
+  28%   { transform: translateY(calc(var(--size) * 0.076923)); }
+  30%   { transform: translateY(calc(var(--size) * 0.01)); }
+  32%   { transform: translateY(0); }          /* top of right lobe */
+  35%   { transform: translateY(calc(var(--size) * 0.01)); }
+  40%   { transform: translateY(calc(var(--size) * 0.1)); }
+  50%   { transform: translateY(calc(var(--size) * 0.4)); }
+  71%   { transform: translateY(calc(var(--size) * 0.952381)); }
+  72.5% { transform: translateY(calc(var(--size) * 0.980392)); }
+  75%   { transform: translateY(var(--size)); } /* bottom tip */
+  77.5% { transform: translateY(calc(var(--size) * 0.980392)); }
+  79%   { transform: translateY(calc(var(--size) * 0.952381)); }
+  100%  { transform: translateY(calc(var(--size) * 0.4)); }
+}
+
+/* --- Accessibility --------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .heart__item {
+    animation-duration: 40s, 80s;
+  }
+}</style>
+</head>
+<body>
+    <main id="heart" class="heart" aria-hidden="true"></main>
+    <script>
+        "use strict";
+
+const WORD_COUNT = 100;
+const MESSAGE = "I love you";
+
+/** Create one animated word; `--index` drives its animation delay. */
+function createItem(index) {
+  const item = document.createElement("div");
+  item.className = "heart__item";
+  item.style.setProperty("--index", index);
+
+  const word = document.createElement("span");
+  word.className = "heart__word";
+  word.textContent = MESSAGE;
+
+  item.append(word);
+  return item;
+}
+
+function renderHeart(container, count = WORD_COUNT) {
+  const fragment = document.createDocumentFragment();
+  for (let i = 1; i <= count; i++) {
+    fragment.append(createItem(i));
+  }
+  container.append(fragment); // single DOM write
+}
+
+const heart = document.getElementById("heart");
+if (heart) renderHeart(heart);
+    </script>
+</body>
+</html>
